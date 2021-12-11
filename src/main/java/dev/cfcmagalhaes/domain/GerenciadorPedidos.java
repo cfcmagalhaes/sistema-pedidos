@@ -3,34 +3,34 @@ package dev.cfcmagalhaes.domain;
 import dev.cfcmagalhaes.enums.StatusEnum;
 import dev.cfcmagalhaes.exceptions.*;
 
-public class ListaDePedidos
+public class GerenciadorPedidos
 {
     Pedido[] lista;
     Integer tamanho = 0;
 
-    public ListaDePedidos( Integer tamanho )
+    public GerenciadorPedidos(Integer tamanho )
     {
         this.lista = new Pedido[tamanho];
         this.tamanho = tamanho;
     }
 
-    public Pedido buscar( Integer numero )
+    public Pedido buscarPorNumero( Integer numero )
     {
-        if( !this.ehVazia( ) ) {
-            for( Pedido pedido : lista )
-                try {
-                    if( pedido.getNumero( ) == numero )
-                        return pedido;
+        if( !this.taVazia( ) )
+        {
+            for( int i = 0; i < this.tamanho; i++ )
+            {
+                if( this.lista[i] != null && this.lista[i].getNumero( ) == numero ) {
+                    return this.lista[i];
                 }
-                catch( NullPointerException npe ) {
-                    return null;
-                }
+            }
+            return null;
         }
 
         return null;
     }
 
-    private Integer buscar( Pedido p )
+    private Integer buscarPorPedido(Pedido p )
     {
         for (int i = 0; i < lista.length; i++) {
             if (lista[i].getNumero() == p.getNumero())
@@ -39,10 +39,10 @@ public class ListaDePedidos
         return -1;
     }
 
-    public void cadastrar( Pedido p )throws PedidoExistenteException, ListaPedidosCheiaException
+    public void cadastrar( Pedido p ) throws PedidoExistenteException, ListaPedidosCheiaException
     {
         // Testa se o pedido já existe
-        if( this.buscar( p.getNumero( ) ) != null )
+        if( this.buscarPorNumero( p.getNumero( ) ) != null )
             throw new PedidoExistenteException( "Pedido nº " + p.getNumero( ) + " já existe na lista!" );
 
         // Testa se a lista está cheia
@@ -62,15 +62,15 @@ public class ListaDePedidos
 
     public void atenderPedido( Integer numero ) throws ListaPedidosVaziaException, PedidoNaoExistenteException
     {
-        if( this.ehVazia( ) )
+        if( this.taVazia( ) )
             throw new ListaPedidosVaziaException( );
 
-        Pedido p = this.buscar( numero );
+        Pedido p = this.buscarPorNumero( numero );
 
         if( p == null )
             throw new PedidoNaoExistenteException( numero );
 
-        int i = this.buscar( p );
+        int i = this.buscarPorPedido( p );
 
         if( i != -1 )
             lista[i].setAtendido( StatusEnum.ATENDIDO );
@@ -136,7 +136,7 @@ public class ListaDePedidos
 
     private boolean vendedorExiste( Integer codigoVendedor )
     {
-        if( !this.ehVazia( ) )
+        if( !this.taVazia( ) )
         {
             for( int i = 0; i < this.lista.length; i++)
             {
@@ -153,8 +153,7 @@ public class ListaDePedidos
         return total * porcent / 100;
     }
 
-
-    private Double calculaTotal(Pedido[] relatorio)
+    private Double calculaTotal( Pedido[] relatorio )
     {
         Double total = 0.0;
         int i = 0;
@@ -209,13 +208,12 @@ public class ListaDePedidos
         }
     }
 
-    private boolean ehVazia( )
+    private boolean taVazia( )
     {
-        for( int i = 0; i < lista.length; i++ )
-            if( lista[i] != null )
-                return false;
+        if( this.lista[0] == null )
+                return true;
 
-        return true;
+        return false;
     }
 
     private boolean taCheia( )
