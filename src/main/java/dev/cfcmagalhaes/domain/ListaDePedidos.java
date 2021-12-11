@@ -1,37 +1,22 @@
 package dev.cfcmagalhaes.domain;
 
 import dev.cfcmagalhaes.enums.StatusEnum;
-import dev.cfcmagalhaes.exceptions.ListaPedidosCheiaException;
-import dev.cfcmagalhaes.exceptions.ListaPedidosVaziaException;
-import dev.cfcmagalhaes.exceptions.PedidoExistenteException;
-import dev.cfcmagalhaes.exceptions.PedidoNaoExistenteException;
+import dev.cfcmagalhaes.exceptions.*;
 
 public class ListaDePedidos
 {
     Pedido[] lista;
+    Integer tamanho = 0;
 
-    /*
-    Construtor da Classe
-     */
     public ListaDePedidos( Integer tamanho )
     {
         this.lista = new Pedido[tamanho];
+        this.tamanho = tamanho;
     }
 
-    /*
-    Retorna a lista de Pedidos
-     */
-    public Pedido[] getLista() {
-        return this.lista;
-    }
-
-    /*
-    Método buscarPedido( Integer numero )
-    retorna Pedido ou null
-     */
     public Pedido buscar( Integer numero )
     {
-        if( !ehVazia( ) ) {
+        if( !this.ehVazia( ) ) {
             for( Pedido pedido : lista )
                 try {
                     if( pedido.getNumero( ) == numero )
@@ -45,10 +30,6 @@ public class ListaDePedidos
         return null;
     }
 
-    /*
-    Método buscarPedido
-    Retorna index do array
-     */
     private Integer buscar( Pedido p )
     {
         for (int i = 0; i < lista.length; i++) {
@@ -58,8 +39,6 @@ public class ListaDePedidos
         return -1;
     }
 
-    // Método cadastrarPedido( Pedido pedido ) retorna void, Precisa verificar se já existe pelo numero e
-    // lance uma exception. Lançar exception se estiver cheia tambem.
     public void cadastrar( Pedido p )throws PedidoExistenteException, ListaPedidosCheiaException
     {
         // Testa se o pedido já existe
@@ -72,7 +51,8 @@ public class ListaDePedidos
 
         for( int i = 0; i < lista.length; i++ )
         {
-            if (lista[i] == null) {
+            if (lista[i] == null)
+            {
                 lista[i] = p;
                 System.out.println( "Pedido nº " + p.getNumero( ) + " adicionado com sucesso!" );
                 return;
@@ -80,9 +60,6 @@ public class ListaDePedidos
         }
     }
 
-
-    // Método atenderPedido( Integer numero ) retorna void altera a flag pedido.atendido para true.
-    // Lançar exceção verificada caso não exista pedido com esse numero na lista.
     public void atenderPedido( Integer numero ) throws ListaPedidosVaziaException, PedidoNaoExistenteException
     {
         if( this.ehVazia( ) )
@@ -99,53 +76,138 @@ public class ListaDePedidos
             lista[i].setAtendido( StatusEnum.ATENDIDO );
     }
 
-//     Método relatorioCliente( Integer codCli, Boolean todos, Boolean atendidos) retorna void.
-//     Imprime os pedidos do cliente informado no parametro.
-//     Se o 2º parametro for true, então imprime todos os pedidos e o 3o parametro é ignorado.
-//     Se o 2° for false imprime somente os atendidos ou somente os pendentes. Em todos os caso no final do
-//     relatorio deve ser impresso o valor total dos pedidos listados.
     public void relatorioCliente( Integer codigoCliente, Boolean todos, Boolean atendidos )
     {
-        Pedido[] lpc = this.listaPedidosPorCliente( codigoCliente );
-        if (todos) {
-            lista.toString();
-            return;
+        Pedido[] lista =  listaPedidosPorCliente( codigoCliente );
+        Pedido[] relatorio = new Pedido[lista.length];
+
+        if( !todos )
+        {
+            int i = 0;
+            if( atendidos )
+                for( int j = 0; j < lista.length; j++ )
+                {
+                    if( lista[j] != null && lista[j].getAtendido() == StatusEnum.ATENDIDO )
+                    {
+                        relatorio[i] = lista[j];
+                        i++;
+                    }
+
+                }
+            else
+            {
+                for( int j = 0; j < lista.length; j++ )
+                    if (lista[j] != null && lista[j].getAtendido() == StatusEnum.PENDENTE)
+                    {
+                        relatorio[i] = lista[j];
+                        i++;
+                    }
+            }
         }
+        else
+            relatorio = lista;
 
-        if (atendidos) {
-            for (lista:
-            ) {
+        this.imprimirRelatorio( relatorio, calculaTotal( relatorio ), false, 0.0 );
+    }
 
+    public void pagarVendedor( Integer codigoVendedor, Double porcent )
+    {
+        Pedido[] lista = this.listaPedidosPorVendedor( codigoVendedor );
+        Pedido[] relatorioPagamento = new Pedido[tamanho];
+
+        int j = 0;
+
+        for( int i = 0; i < lista.length; i++)
+        {
+            if( lista[i] != null && lista[i].getAtendido( ) == StatusEnum.ATENDIDO && !lista[i].getComissaoPaga( ) )
+            {
+                relatorioPagamento[j] = lista[i];
+                lista[i].setComissaoPaga( true );
+                j++;
             }
         }
 
-        System.out.println("Llista");
+        Double total = calculaTotal( relatorioPagamento );
+        Double comissao = calculaComissao( total, porcent );
 
+        this.imprimirRelatorio( relatorioPagamento, total, true, comissao );
+
+    }
+
+    private boolean vendedorExiste( Integer codigoVendedor )
+    {
+        if( !this.ehVazia( ) )
+        {
+            for( int i = 0; i < this.lista.length; i++)
+            {
+                if( this.lista[i].getCodigoVendedor( ) == codigoVendedor )
+                    return true;
+            }
+            return false;
+        }
+        throw new ListaPedidosVaziaException( );
+    }
+
+    private Double calculaComissao( Double total, Double porcent)
+    {
+        return total * porcent / 100;
+    }
+
+
+    private Double calculaTotal(Pedido[] relatorio)
+    {
+        Double total = 0.0;
+        int i = 0;
+
+        while( relatorio[i] != null )
+        {
+            total += relatorio[i].getValor( );
+            i++;
+        }
+
+        return total;
     }
 
     private Pedido[] listaPedidosPorCliente( Integer codigoCliente )
     {
-        Pedido[] lista;
-        int i = 0;
+        Pedido[] listaPedidosPorCliente = new Pedido[this.tamanho];
 
-        for( Pedido pedido: this.lista )
+        int j = 0;
+
+        for( int i = 0; i < this.tamanho; i++ )
         {
-            if( pedido.getCodigoCliente( ) == codigoCliente )
-                lista[i] = pedido;
-            i++;
+            if( this.lista[i].getCodigoCliente( ) == codigoCliente )
+            {
+                listaPedidosPorCliente[j] = this.lista[i];
+                j++;
+            }
         }
 
+        return listaPedidosPorCliente;
     }
 
-    // Método pagarVendedor( Integer codigoVendedor, Double porcent) retorna void. imprime todos os pedidos do vendedor
-    // informado que já foram atendidos mas ainda não pagos. Alterar a flag ComissaoPaga para true. No final do
-    // relatorio imprime o valor total dos pedidos impressos e a comissão que deve ser paga ao vendedor.
-    // A comissão é calculada aplicando a porcentagem informada no parametro porcent ao valor total dos pedidos
-    // listados.
-//    public void pagarVendedor( Integer codigoVendedor, Double porcent )
-//    {
-//
-//    }
+    private Pedido[] listaPedidosPorVendedor( Integer codigoVendedor )
+    {
+        if( vendedorExiste( codigoVendedor ) )
+        {
+            Pedido[] listaPedidosPorVendedor = new Pedido[tamanho];
+
+            int j = 0;
+
+            for( int i = 0; i < this.tamanho; i++ )
+            {
+                if( this.lista[i].getCodigoVendedor( ) == codigoVendedor )
+                {
+                    listaPedidosPorVendedor[j] = this.lista[i];
+                    j++;
+                }
+            }
+            return listaPedidosPorVendedor;
+        }
+        else {
+            throw new VendedorNaoExisteException( codigoVendedor );
+        }
+    }
 
     private boolean ehVazia( )
     {
@@ -164,13 +226,25 @@ public class ListaDePedidos
         return true;
     }
 
-    @Override
-    public String toString( )
+    private void imprimirRelatorio( Pedido[] lista, Double total, Boolean exibeComissao, Double valorComissao )
     {
         String saida = "ListaDePedidos[ \n";
-        for( Pedido pedido: lista)
-            saida += pedido.toString() + "\n";
 
-        return saida + "]";
+        for( Pedido pedido: lista )
+        {
+            if (pedido == null)
+                break;
+
+            saida += pedido.toString() + "\n";
+        }
+        saida += "] \n " +
+                "Valor Total dos Pedidos R$ " + total;
+
+        if( exibeComissao )
+            saida += "\n" +
+                "Valor Total da Comissão R$ " + valorComissao;
+
+        System.out.println( saida );
     }
+
 }
