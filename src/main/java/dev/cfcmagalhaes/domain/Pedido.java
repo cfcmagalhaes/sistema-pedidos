@@ -1,5 +1,7 @@
 package dev.cfcmagalhaes.domain;
 
+import dev.cfcmagalhaes.enums.StatusEnum;
+
 import java.util.Objects;
 
 public class Pedido
@@ -8,10 +10,13 @@ public class Pedido
     private Integer codigoCliente;
     private Integer codigoVendedor;
     private Double valor;
-    private Boolean atendido;
-    private Boolean comissaoPaga;
+    private StatusEnum atendido = StatusEnum.PENDENTE;
+    private Boolean comissaoPaga = false;
 
-    public Pedido( Integer numero, Integer codigoCliente, Integer codigoVendedor, Double valor )
+    public Pedido( Integer numero,
+                   Integer codigoCliente,
+                   Integer codigoVendedor,
+                   Double valor )
     {
         this.numero = numero;
         this.codigoCliente = codigoCliente;
@@ -22,11 +27,6 @@ public class Pedido
     public Integer getNumero( )
     {
         return numero;
-    }
-
-    public void setNumero( Integer numero )
-    {
-        this.numero = numero;
     }
 
     public Integer getCodigoCliente( )
@@ -59,13 +59,11 @@ public class Pedido
         this.valor = valor;
     }
 
-    public Boolean getAtendido( )
-    {
+    public StatusEnum getAtendido() {
         return atendido;
     }
 
-    public void setAtendido( Boolean atendido )
-    {
+    public void setAtendido(StatusEnum atendido) {
         this.atendido = atendido;
     }
 
@@ -92,5 +90,17 @@ public class Pedido
     @Override public int hashCode( )
     {
         return Objects.hash( numero );
+    }
+
+    @Override
+    public String toString() {
+        return "Pedido{" +
+                "numero=" + numero +
+                ", codigoCliente=" + codigoCliente +
+                ", codigoVendedor=" + codigoVendedor +
+                ", valor=" + valor +
+                ", atendido=" + atendido +
+                ", comissaoPaga=" + comissaoPaga +
+                "}";
     }
 }
